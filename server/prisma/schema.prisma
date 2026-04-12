@@ -17,8 +17,10 @@ model User {
   username String  
   email String  @unique
   name  String?
+  password String
   createdAt DateTime @default(now())
-} 
+}
+
 
 // model Post { 
 //   id        String     @id @default(uuid()) 
