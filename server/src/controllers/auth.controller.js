@@ -1,14 +1,20 @@
 import authService from "../services/auth.service.js";
 
+const statusCode = error.isValidationError ? 400 : 500;
 /**
  * ADDED: Removed unused prisma and bcrypt imports
  * These are handled in the service layer, not needed in the controller
  */
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-  // Implement login logic here
-  res.json({ message: "Login successful" });
+  try {
+    const result = await authService.login(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(statusCode).json({
+      message: error.message,
+    });
+  }
 };
 
 /**
@@ -29,7 +35,6 @@ export const signup = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     // ADDED: Check if error is a validation error for proper HTTP status code
-    const statusCode = error.isValidationError ? 400 : 500;
     res.status(statusCode).json({
       message: error.message,
     });

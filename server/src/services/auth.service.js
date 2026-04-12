@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
 // import createValidationError from "../utils/validation.error.js";
 /**
  * Business logic for user signup
@@ -91,4 +92,58 @@ const signup = async (data) => {
   };
 };
 
-export default { signup };
+const login = async (data) => {
+  const { email, password } = data;
+
+  if (!email.trim() || !password) {
+    throw isValidationError("Invalid credentials");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email.trim(),
+    },
+  });
+
+  if (!user) {
+    throw isValidationError("Invalid credentials");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) throw isValidationError("Invalid credentials");
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken },
+  });
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+    },
+  };
+
+  //   res.cookie("accessToken", accessToken, {
+  //     httpOnly: true,
+  //     secure: true,
+  //     samesite: "Lax",
+  //     maxAge: 3600000,
+  //   });
+
+  //   res.cookie("refreshToken", refreshToken, {
+  //     httpOnly: true,
+  //     secure: true,
+  //     samesite: "Lax",
+  //     maxAge: 5000000,
+  //   });
+};
+
+export default { signup, login };
