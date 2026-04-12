@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/token.js";
 
 const createValidationError = (message) => {
   const error = new Error(message);
@@ -160,19 +160,33 @@ const login = async (data) => {
       email: user.email,
     },
   };
-  //   res.cookie("accessToken", accessToken, {
-  //     httpOnly: true,
-  //     secure: true,
-  //     samesite: "Lax",
-  //     maxAge: 3600000,
-  //   });
-
-  //   res.cookie("refreshToken", refreshToken, {
-  //     httpOnly: true,
-  //     secure: true,
-  //     samesite: "Lax",
-  //     maxAge: 5000000,
-  //   });
 };
 
-export default { signup, login };
+const refreshToken = async (data) => {
+    if(!data) throw createValidationError("Invalid request body")
+     
+    const {refreshToken} = data
+
+    if(!refreshToken) {
+        throw createValidationError("No refresh token provided");
+    }
+
+    let decoded;
+    try {
+        decoded = verifyRefreshToken(refreshToken)
+    } catch (error) {
+        throw createValidationError("Invalid refresh token")
+    }
+
+    const user = await prisma.user.findUnique({
+        where: {id: decoded.userId}
+    })
+
+    if(!user || user.refreshToken !== refreshToken){
+        throw createValidationError("Invalid session")
+    }
+    const newAccessToken = generateAccessToken(user)
+    return {accessToken: newAccessToken}
+}
+
+export default { signup, login, refreshToken };

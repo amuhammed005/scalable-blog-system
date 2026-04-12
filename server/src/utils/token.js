@@ -47,12 +47,6 @@ const verifyRefreshToken = (token) => {
  * Can now import as: import { generateAccessToken } from './token.js'
  * Or as default: import tokenUtils from './token.js'
  */
-export {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-};
 export default {
   generateAccessToken,
   generateRefreshToken,
