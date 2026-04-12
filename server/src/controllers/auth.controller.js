@@ -75,18 +75,25 @@ export const login = async (req, res) => {
  * Security: Validates refresh token and user session
  */
 export const refreshToken = async (req, res) => {
-    try {
-        const result = await authService.refreshToken(req.body);
-        res.status(200).json(result);
-    } catch (error) {
-        // ADDED: Use 403 for authentication/authorization failures
-        res.status(403).json({
-            message: error.message
-        });
-    }
+  try {
+    const result = await authService.refreshToken(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    // ADDED: Use 403 for authentication/authorization failures
+    res.status(403).json({
+      message: error.message,
+    });
+  }
 };
 
-export const logout = async () => {
+export const logout = async (req, res) => {
   // Implement logout logic here
-  res.json({ message: "Logout successful" });
+  try {
+    await authService.logout(req.body);
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(403).json({
+      message: error.message,
+    });
+  }
 };

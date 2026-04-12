@@ -210,4 +210,16 @@ const refreshToken = async (data) => {
   return { accessToken: newAccessToken };
 };
 
-export default { signup, login, refreshToken };
+const logout = async (data) => {
+  if(!data || typeof(data) !== Object){
+    throw createValidationError("Invalid request body")
+
+  }
+  const {userId} = data
+
+  await prisma.user.update({
+  where: {id: userId},
+  data: {refreshToken: null}
+})}
+
+export default { signup, login, refreshToken, logout }
