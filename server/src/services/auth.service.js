@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma.js";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/token.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/token.js";
 
 const createValidationError = (message) => {
   const error = new Error(message);
@@ -85,9 +89,9 @@ const signup = async (data) => {
 
   // Return only non-sensitive user data (password excluded for security)
   return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
+    id: user.id,
+    username: user.username,
+    email: user.email,
     // REMOVED: createdAt - kept response minimal
   };
 };
@@ -162,31 +166,48 @@ const login = async (data) => {
   };
 };
 
+/**
+ * Business logic for token refresh
+ * ADDED: Complete refresh token validation and renewal
+ * Responsibilities:
+ * - Validate refresh token format and signature
+ * - Verify token exists in database (prevents token reuse)
+ * - Generate new access token
+ * - Return only new access token (refresh token remains valid)
+ */
 const refreshToken = async (data) => {
-    if(!data) throw createValidationError("Invalid request body")
-     
-    const {refreshToken} = data
+  // ADDED: Validate input
+  if (!data || typeof data !== "object") {
+    throw createValidationError("Invalid request body");
+  }
 
-    if(!refreshToken) {
-        throw createValidationError("No refresh token provided");
-    }
+  const { refreshToken } = data;
 
-    let decoded;
-    try {
-        decoded = verifyRefreshToken(refreshToken)
-    } catch (error) {
-        throw createValidationError("Invalid refresh token")
-    }
+  if (!refreshToken) {
+    throw createValidationError("Refresh token is required");
+  }
 
-    const user = await prisma.user.findUnique({
-        where: {id: decoded.userId}
-    })
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    throw createValidationError("Invalid or expired refresh token");
+  }
 
-    if(!user || user.refreshToken !== refreshToken){
-        throw createValidationError("Invalid session")
-    }
-    const newAccessToken = generateAccessToken(user)
-    return {accessToken: newAccessToken}
-}
+  // ADDED: Verify user exists and refresh token matches database
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.userId },
+  });
+
+  if (!user || user.refreshToken !== refreshToken) {
+    throw createValidationError(
+      "Invalid session - token may have been revoked",
+    );
+  }
+
+  // Generate new access token only (refresh token remains valid)
+  const newAccessToken = generateAccessToken(user);
+  return { accessToken: newAccessToken };
+};
 
 export default { signup, login, refreshToken };
