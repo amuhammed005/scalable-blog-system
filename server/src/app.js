@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { prisma } from "./lib/prisma.js";
 import authRoutes from "./routes/auth.routes.js";
-import {authMiddleware} from "../src/middlewares/auth.middleware.js"
+import { authMiddleware } from "../src/middlewares/auth.middleware.js";
 
 const app = express();
 
@@ -21,8 +21,6 @@ app.get("/protected", authMiddleware, (req, res) => {
     },
   });
 });
-
-// console.log("Creating user...")
 
 app.get("/test-db", (req, res) => {
   const users = prisma.user.findMany();
