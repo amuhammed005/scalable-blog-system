@@ -11,7 +11,7 @@ const generateAccessToken = (user) => {
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: "15m",
-    }
+    },
   );
 };
 
@@ -21,13 +21,9 @@ const generateAccessToken = (user) => {
  * Contains userId in payload
  */
 const generateRefreshToken = (user) => {
-  return jwt.sign(
-    { userId: user.id },
-    process.env.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: "7d",
-    }
-  );
+  return jwt.sign({ userId: user.id }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
 };
 
 /**
@@ -51,5 +47,15 @@ const verifyRefreshToken = (token) => {
  * Can now import as: import { generateAccessToken } from './token.js'
  * Or as default: import tokenUtils from './token.js'
  */
-export { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken };
-export default { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken };
+export {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+};
+export default {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+};
