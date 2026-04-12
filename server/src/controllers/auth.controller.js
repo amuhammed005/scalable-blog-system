@@ -1,16 +1,33 @@
 import authService from "../services/auth.service.js";
 
-const statusCode = error.isValidationError ? 400 : 500;
 /**
- * ADDED: Removed unused prisma and bcrypt imports
- * These are handled in the service layer, not needed in the controller
+ * POST /auth/login
+ * Authenticates a user and returns JWT tokens
+ *
+ * Request body:
+ *   - email: string (required, valid email format)
+ *   - password: string (required)
+ *
+ * Response (200):
+ *   {
+ *     accessToken: string,
+ *     refreshToken: string,
+ *     user: { id, username, email }
+ *   }
+ *
+ * Response (400/500):
+ *   { message: error description }
+ *
+ * ADDED: Complete login implementation with JWT token generation
+ * ADDED: Proper error handling for validation vs server errors
  */
-
 export const login = async (req, res) => {
   try {
     const result = await authService.login(req.body);
     res.status(200).json(result);
   } catch (error) {
+    // ADDED: Check if error is a validation error for proper HTTP status code
+    const statusCode = error.isValidationError ? 400 : 500;
     res.status(statusCode).json({
       message: error.message,
     });
@@ -35,6 +52,7 @@ export const signup = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     // ADDED: Check if error is a validation error for proper HTTP status code
+    const statusCode = error.isValidationError ? 400 : 500;
     res.status(statusCode).json({
       message: error.message,
     });

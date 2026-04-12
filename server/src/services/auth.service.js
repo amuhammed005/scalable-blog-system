@@ -1,7 +1,12 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
-// import createValidationError from "../utils/validation.error.js";
+
+const createValidationError = (message) => {
+  const error = new Error(message);
+  error.isValidationError = true;
+  return error;
+};
 /**
  * Business logic for user signup
  * ADDED: Comprehensive input validation and error handling
@@ -12,11 +17,6 @@ import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
  * - Create user record in database
  * - Return only non-sensitive user data
  */
-const createValidationError = (message) => {
-  const error = new Error(message);
-  error.isValidationError = true;
-  return error;
-};
 const signup = async (data) => {
   // ADDED: Validate input is object
   if (!data || typeof data !== "object") {
@@ -85,42 +85,72 @@ const signup = async (data) => {
 
   // Return only non-sensitive user data (password excluded for security)
   return {
-    id: user.id,
-    username: user.username,
-    email: user.email,
+      id: user.id,
+      username: user.username,
+      email: user.email,
     // REMOVED: createdAt - kept response minimal
   };
 };
 
+/**
+ * Business logic for user login
+ * ADDED: Complete login implementation with JWT tokens
+ * Responsibilities:
+ * - Validate email and password are provided
+ * - Find user by email
+ * - Verify password with bcrypt
+ * - Generate access and refresh tokens
+ * - Store refresh token in database
+ * - Return tokens and user data (without password)
+ */
 const login = async (data) => {
-  const { email, password } = data;
-
-  if (!email.trim() || !password) {
-    throw isValidationError("Invalid credentials");
+  // ADDED: Validate input
+  if (!data || typeof data !== "object") {
+    throw createValidationError("Invalid request body");
   }
 
+  const { email, password } = data;
+
+  // ADDED: Validate required fields
+  if (!email?.trim() || !password) {
+    throw createValidationError("Email and password are required");
+  }
+
+  // ADDED: Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    throw createValidationError("Invalid email format");
+  }
+
+  // Find user by email (normalized to lowercase)
   const user = await prisma.user.findUnique({
     where: {
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
     },
   });
 
   if (!user) {
-    throw isValidationError("Invalid credentials");
+    throw createValidationError("Invalid email or password");
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  // Verify password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
-  if (!isMatch) throw isValidationError("Invalid credentials");
+  if (!isPasswordValid) {
+    throw createValidationError("Invalid email or password");
+  }
 
+  // Generate JWT tokens
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
+  // Store refresh token in database for logout/token invalidation
   await prisma.user.update({
     where: { id: user.id },
     data: { refreshToken },
   });
 
+  // Return tokens and user data (exclude password and sensitive fields)
   return {
     accessToken,
     refreshToken,
@@ -130,7 +160,6 @@ const login = async (data) => {
       email: user.email,
     },
   };
-
   //   res.cookie("accessToken", accessToken, {
   //     httpOnly: true,
   //     secure: true,
