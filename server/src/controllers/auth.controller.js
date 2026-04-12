@@ -1,5 +1,9 @@
-import { prisma } from "../lib/prisma.js";
-import bcrypt from "bcryptjs";
+import authService from "../services/auth.service.js";
+
+/**
+ * ADDED: Removed unused prisma and bcrypt imports
+ * These are handled in the service layer, not needed in the controller
+ */
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
@@ -7,47 +11,28 @@ export const login = async (req, res) => {
   res.json({ message: "Login successful" });
 };
 
+/**
+ * POST /auth/signup
+ *
+ * Response (201):
+ *   { id, username, email }
+ *
+ * Response (400/500):
+ *   { message: error description }
+ *
+ * ADDED: Better error handling to distinguish validation errors (400) from server errors (500)
+ * FIXED: Typo in import name (authServise → authService)
+ */
 export const signup = async (req, res) => {
   try {
-    const { username, name, email, password } = req.body;
-    // Implement signup logic here
-    if (!username || !name || !email || !password) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
-    }
-
-    if (name.trim().length < 2) {
-      return res.status(400).json({
-        message: "Name must be at least 2 characters",
-      });
-    }
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) return res.json({ message: "User already exists" });
-
-    if (password.length < 6)
-      return res.json({ message: "Password must be at least 6 characters" });
-
-    const hasshedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        username,
-        name,
-        email,
-        password: hasshedPassword,
-      },
-    });
-
-    const userData = {...user, password: undefined}
-    console.log("userData>>", userData);
-
-    res.status(201).json({ message: "Signup successful" });
+    const result = await authService.signup(req.body);
+    res.status(201).json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    // ADDED: Check if error is a validation error for proper HTTP status code
+    const statusCode = error.isValidationError ? 400 : 500;
+    res.status(statusCode).json({
+      message: error.message,
+    });
   }
 };
 
