@@ -210,14 +210,40 @@ const refreshToken = async (data) => {
   return { accessToken: newAccessToken };
 };
 
+/**
+ * Business logic for user logout
+ * ADDED: Complete logout implementation with token invalidation
+ * Responsibilities:
+ * - Decode refresh token to extract userId
+ * - Invalidate token in database (set to null)
+ * - This prevents token reuse even if it's not expired
+ * Security: Tokens stored in database act as session manager
+ */
 const logout = async (data) => {
-  if (!data || typeof data !== Object) {
+  if (!data || typeof data !== "object") {
     throw createValidationError("Invalid request body");
   }
-  const { userId } = data;
 
+  const { refreshToken } = data;
+
+  if (!refreshToken) {
+    throw createValidationError("Refresh token required for logout");
+  }
+
+  let decoded;
+  try {
+    // Decode the refresh token to extract userId
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    // Even if token is invalid/expired, we can still logout
+    throw createValidationError("Invalid refresh token");
+  }
+
+  // INVALIDATE TOKEN IN DATABASE:
+  // Set refreshToken to null, making any future attempts to use it fail
+  // This is token revocation - prevents "zombie" sessions
   await prisma.user.update({
-    where: { id: userId },
+    where: { id: decoded.userId },
     data: { refreshToken: null },
   });
 };
