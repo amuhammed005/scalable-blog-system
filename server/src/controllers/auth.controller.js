@@ -56,17 +56,17 @@ export const login = async (req, res) => {
     // - sameSite: "strict" → prevents CSRF attacks by not sending cookie with cross-site requests
     // - maxAge: 7 days → cookie expires after 7 days, matching refresh token expiration
     res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,    // SECURITY: Prevents JavaScript from accessing the token
-      secure: false,      // TODO: Change to true in production with HTTPS
+      httpOnly: true, // SECURITY: Prevents JavaScript from accessing the token
+      secure: false, // TODO: Change to true in production with HTTPS
       sameSite: "strict", // SECURITY: Prevents CSRF attacks
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
-    })
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    });
 
     // Return accessToken in response body (client uses this for subsequent requests)
     // refreshToken stays in cookie (automatic, secure)
     res.status(200).json({
       accessToken: result.accessToken,
-      user: result.user
+      user: result.user,
     });
   } catch (error) {
     // ADDED: Check if error is a validation error for proper HTTP status code
@@ -99,14 +99,16 @@ export const refreshToken = async (req, res) => {
     // req.cookies is populated by cookieParser middleware
     // This is more secure than accepting tokens from request body (prevents token in logs/history)
     const token = req.cookies.refreshToken;
-    
-    if(!token){
-      return res.status(401).json({message: "Missing refresh token in cookies"})
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Missing refresh token in cookies" });
     }
-    
+
     // Call service to validate and refresh the token
-    const result = await authService.refreshToken({refreshToken: token});
-    
+    const result = await authService.refreshToken({ refreshToken: token });
+
     // Return new accessToken in response body
     res.status(200).json(result);
   } catch (error) {
@@ -123,24 +125,24 @@ export const logout = async (req, res) => {
     // 1. Get refreshToken from cookie
     // 2. Invalidate token in database (prevents reuse of old token)
     // 3. Clear cookie on client side
-    
+
     const token = req.cookies.refreshToken;
-    
+
     if (!token) {
       return res.status(401).json({ message: "No active session to logout" });
     }
 
     // Call service to invalidate the refresh token in database
     await authService.logout({ refreshToken: token });
-    
+
     // COOKIE CLEARING: Remove refreshToken cookie from client
     // Must match the original cookie settings (httpOnly, secure, sameSite)
     res.clearCookie("refreshToken", {
-      httpOnly: true,    // Must match the original cookie settings
-      secure: false,      // Must match the original cookie settings
-      sameSite: "strict" // Must match the original cookie settings
+      httpOnly: true, // Must match the original cookie settings
+      secure: false, // Must match the original cookie settings
+      sameSite: "strict", // Must match the original cookie settings
     });
-    
+
     res.json({ message: "Logged out successfully" });
   } catch (error) {
     res.status(400).json({
