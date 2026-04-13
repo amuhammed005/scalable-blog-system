@@ -20,12 +20,24 @@ const authMiddleware = async (req, res, next) => {
   // Extract the Authorization header from the request
   const authHeader = req.headers.authorization;
 
+  // ERROR LOGGING: Check for undefined headers
+  if (!authHeader) {
+    console.error(
+      "authMiddleware: req.headers.authorization is undefined or missing",
+    );
+    return res.status(401).json({ message: "Access token required" });
+  }
+
   // Extract the token from the header (expects "Bearer TOKEN" format)
   // authHeader.split(" ")[1] gets the token part after "Bearer "
   const token = authHeader && authHeader.split(" ")[1];
 
-  // If no token is provided, return a 401 Unauthorized response
+  // ERROR LOGGING: Check for undefined token after extraction
   if (!token) {
+    console.error(
+      "authMiddleware: token extraction failed from authHeader:",
+      authHeader,
+    );
     return res.status(401).json({ message: "Access token required" });
   }
 
@@ -33,6 +45,14 @@ const authMiddleware = async (req, res, next) => {
     // Verify the access token using the utility function
     // This will throw an error if the token is invalid or expired
     const decoded = verifyAccessToken(token);
+
+    // ERROR LOGGING: Check decoded result
+    if (!decoded) {
+      console.error("authMiddleware: verifyAccessToken returned undefined");
+      return res
+        .status(403)
+        .json({ message: "Invalid Token or Token Expired" });
+    }
 
     // Attach the decoded user information to the request object
     // This makes user data available in subsequent middleware and routes

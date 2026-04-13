@@ -100,7 +100,11 @@ export const refreshToken = async (req, res) => {
     // This is more secure than accepting tokens from request body (prevents token in logs/history)
     const token = req.cookies.refreshToken;
 
+    // ERROR LOGGING: Check for undefined values before proceeding
     if (!token) {
+      console.error(
+        "refreshToken controller: req.cookies.refreshToken is undefined or missing",
+      );
       return res
         .status(401)
         .json({ message: "Missing refresh token in cookies" });
@@ -108,6 +112,15 @@ export const refreshToken = async (req, res) => {
 
     // Call service to validate and refresh the token
     const result = await authService.refreshToken({ refreshToken: token });
+
+    // ERROR LOGGING: Check service response
+    if (!result || !result.accessToken) {
+      console.error(
+        "refreshToken controller: authService.refreshToken returned invalid result:",
+        result,
+      );
+      return res.status(500).json({ message: "Failed to refresh token" });
+    }
 
     // Return new accessToken in response body
     res.status(200).json(result);
@@ -128,7 +141,11 @@ export const logout = async (req, res) => {
 
     const token = req.cookies.refreshToken;
 
+    // ERROR LOGGING: Check for undefined values
     if (!token) {
+      console.error(
+        "logout controller: req.cookies.refreshToken is undefined or missing",
+      );
       return res.status(401).json({ message: "No active session to logout" });
     }
 
