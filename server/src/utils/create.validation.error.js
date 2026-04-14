@@ -5,4 +5,4 @@ const createValidationError = (message) => {
   return error;
 };
 
-export {createValidationError}
+export { createValidationError };
