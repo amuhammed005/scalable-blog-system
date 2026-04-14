@@ -5,12 +5,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/token.js";
-
-const createValidationError = (message) => {
-  const error = new Error(message);
-  error.isValidationError = true;
-  return error;
-};
+import { createValidationError } from "../utils/create.validation.error.js";
 /**
  * Business logic for user signup
  * ADDED: Comprehensive input validation and error handling
