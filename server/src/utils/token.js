@@ -53,9 +53,3 @@ export {
   verifyAccessToken,
   verifyRefreshToken,
 };
-export default {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-};
