@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser"
 
 import { prisma } from "./lib/prisma.js";
 import authRoutes from "./routes/auth.routes.js";
+import postRoutes from "../src/routes/post-route/post.routes.js"
 import { authMiddleware } from "../src/middlewares/auth.middleware.js";
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(cors({
 }));
 
 app.use("/auth", authRoutes);
+app.use("/posts", postRoutes)
 
 // Protected route to test access token
 app.get("/protected", authMiddleware, (req, res) => {
