@@ -17,17 +17,20 @@ model User {
   username  String
   email     String   @unique
   name      String?
+  posts     Post[]
   password  String
   refreshToken String?  // ADDED: Store refresh token for logout/token invalidation
   createdAt DateTime @default(now())
 }
 
 
-// model Post { 
-//   id        String     @id @default(uuid()) 
-//   title     String
-//   content   String?
-//   published Boolean @default(false) 
-//   author    User    @relation(fields: [authorId], references: [id]) 
-//   authorId  String
-// } 
+model Post { 
+  id        String     @id @default(uuid()) 
+  title     String
+  content   String
+  mediaURL  String?
+  createdAt DateTime  @default(now())
+  // published Boolean @default(false) 
+  userId  String
+  user    User    @relation(fields: [userId], references: [id]) 
+} 
