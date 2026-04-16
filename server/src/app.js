@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser"
 import { prisma } from "./lib/prisma.js";
 import authRoutes from "./routes/auth.routes.js";
 import postRoutes from "../src/routes/post-route/post.routes.js"
-import likeRoutes from "../src/routes/like-routes/like.routes.js"
+import likeRoutes from "../src/routes/like-route/like.route.js"
 import { authMiddleware } from "../src/middlewares/auth.middleware.js";
 
 const app = express();
