@@ -18,19 +18,32 @@ model User {
   email     String   @unique
   name      String?
   posts     Post[]
+  like      Like[]
   password  String
   refreshToken String?  // ADDED: Store refresh token for logout/token invalidation
   createdAt DateTime @default(now())
 }
-
 
 model Post { 
   id        String     @id @default(uuid()) 
   title     String
   content   String
   mediaURL  String?
-  createdAt DateTime  @default(now())
   // published Boolean @default(false) 
   userId  String
+  like    Like[]
   user    User    @relation(fields: [userId], references: [id]) 
+  createdAt DateTime  @default(now())
 } 
+
+model Like {
+  id        String    @id @default(uuid())
+
+  userId    String
+  postId    String
+
+  user      User      @relation(fields: [userId], references: [id])
+  post      Post      @relation(fields: [postId], references: [id]) 
+  createdAt DateTime  @default(now())
+  @@unique([postId, userId])
+}
